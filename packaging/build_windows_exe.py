@@ -128,7 +128,7 @@ def main():
     subprocess.run([str(compiler/'makensis.exe'),'/V2','/INPUTCHARSET','UTF8',
         '/DVERSION='+version,'/DOUTPUT='+str(setup),'/DICON='+str(icon),'/DPACKAGE='+str(package),
         '/DFILES='+str(add),'/DREMOVE_FILES='+str(remove),str(ROOT/'packaging/installer.nsi')],check=True)
-    subprocess.run([str(setup),'/S','/WRITEUNINSTALLER','/D='+str(package)],check=True,timeout=30)
+    subprocess.run('"'+str(setup)+'" /S /WRITEUNINSTALLER /D='+str(package),check=True,timeout=30)
     if not (package/'卸载米花.exe').is_file():raise RuntimeError('未能生成随更新包分发的卸载程序。')
     portable=output/('米花-免安装版-v'+version+'.zip')
     zip_root='米花-v'+version

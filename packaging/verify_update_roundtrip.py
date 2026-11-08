@@ -78,7 +78,8 @@ def main():
     for name in ('PYTHONHOME', 'PYTHONPATH', 'DEEPSEEK_API_KEY', 'OPENAI_API_KEY'):
         env.pop(name, None)
     try:
-        subprocess.run([str(args.installer.resolve()), '/S', '/TESTMODE', '/D=' + str(target)],
+        # NSIS /D= and _?= must be unquoted final command-line tails.
+        subprocess.run('"' + str(args.installer.resolve()) + '" /S /TESTMODE /D=' + str(target),
                        check=True, timeout=180)
         assert (target / '米花.exe').is_file() and (target / '卸载米花.exe').is_file()
         info = json.loads((target / 'build-info.json').read_text(encoding='utf-8'))
@@ -132,7 +133,7 @@ def main():
         # The new uninstall manifest removes the helper and app, preserving data
         # and unknown root files, without touching the real registry/shortcuts.
         (target / 'unknown-after-update.txt').write_bytes(b'keep')
-        subprocess.run([str(target / '卸载米花.exe'), '/S', '/TESTMODE', '_?=' + str(target)],
+        subprocess.run('"' + str(target / '卸载米花.exe') + '" /S /TESTMODE _?=' + str(target),
                        cwd=sandbox, check=True, timeout=90)
         assert not (target / 'MihuaAgent.exe').exists() and not (target / 'MihuaUpdater.exe').exists()
         assert (target / 'data/notes/keep.txt').read_bytes() == preserve['data/notes/keep.txt']

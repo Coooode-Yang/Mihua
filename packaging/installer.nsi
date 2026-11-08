@@ -36,6 +36,27 @@ VIAddVersionKey /LANG=2052 "LegalCopyright" "米花项目"
 !insertmacro MUI_LANGUAGE "English"
 Var TestMode
 
+; Test mode may only write below TEMP, never the registered installation.
+!macro RequireTemporaryTestDirectory
+    GetFullPathName $2 "$TEMP\"
+    GetFullPathName $3 "$INSTDIR\"
+    StrLen $4 $2
+    StrCpy $5 $3 $4
+    ${If} $5 != $2
+    ${OrIf} $3 == $2
+        SetErrorLevel 9
+        Quit
+    ${EndIf}
+    ReadRegStr $6 HKCU "Software\BaiAgent" "InstallDir"
+    ${If} $6 != ""
+        GetFullPathName $6 "$6\"
+        ${If} $3 == $6
+            SetErrorLevel 9
+            Quit
+        ${EndIf}
+    ${EndIf}
+!macroend
+
 Function .onInit
     SetShellVarContext current
     ${GetParameters} $0
@@ -52,6 +73,7 @@ Function .onInit
     ${GetOptions} $0 "/TESTMODE" $1
     ${IfNot} ${Errors}
         StrCpy $TestMode "1"
+        !insertmacro RequireTemporaryTestDirectory
     ${EndIf}
 FunctionEnd
 
@@ -90,6 +112,7 @@ Function un.onInit
     ${GetOptions} $0 "/TESTMODE" $1
     ${IfNot} ${Errors}
         StrCpy $TestMode "1"
+        !insertmacro RequireTemporaryTestDirectory
     ${EndIf}
 FunctionEnd
 
