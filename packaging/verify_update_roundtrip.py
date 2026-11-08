@@ -117,7 +117,7 @@ def main():
         (target / 'data/notes/keep.txt').write_text('保留的合成笔记', encoding='utf-8')
         (target / 'data/models').mkdir(exist_ok=True)
         (target / 'data/models/test.gguf').write_bytes(b'synthetic-local-model-marker')
-        preserve = {str(p.relative_to(target)): p.read_bytes() for p in (target / 'data').rglob('*') if p.is_file()}
+        preserve = {p.relative_to(target).as_posix(): p.read_bytes() for p in (target / 'data').rglob('*') if p.is_file()}
         (target / 'unknown-user-file.txt').write_bytes(b'keep unknown file in backup')
         work.mkdir()
         shutil.copy2(archive, work / 'package.zip')
