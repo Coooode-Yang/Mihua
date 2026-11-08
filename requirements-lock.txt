@@ -35,7 +35,7 @@ Pygments==2.21.0
 pyinstaller==6.22.3
 pyinstaller-hooks-contrib==2026.9
 pypdfium2==5.14.0
-PySide6==6.8.3
+PySide6==6.12.0
 PySide6_Addons==6.8.3
 PySide6_Essentials==6.8.3
 pytest==9.2.0
