@@ -1,0 +1,153 @@
+{
+  "scenario_id": "case_03_loss",
+  "data_origin": "synthetic",
+  "scenario_note": "Synthetic Wi-Fi session with 100% reported signal quality (clamped boundary) alongside 6/10 ICMP packet loss and DNS timeouts.",
+  "scenario_config_defaults": {
+    "trusted_portal_hosts": [
+      "auth.campus.edu.test"
+    ],
+    "allowed_private_targets": [
+      "10.0.0.0/8",
+      "campus.edu.test"
+    ],
+    "allowed_browser_hosts": [
+      "auth.campus.edu.test"
+    ],
+    "configured_proxy_url": null,
+    "routing_rules": []
+  },
+  "network_snapshot": {
+    "interfaces": [
+      {
+        "name": "WLAN",
+        "description": "Intel(R) Wi-Fi 6 AX201 160MHz",
+        "adapter_type": "wifi",
+        "status": "connected",
+        "mac_address": "DC-FB-48-12-34-56",
+        "ipv4_addresses": [
+          {
+            "ip": "10.24.18.77",
+            "prefix_length": 24
+          }
+        ],
+        "ipv6_addresses": [
+          {
+            "ip": "fe80::defb:48ff:fe12:3456",
+            "prefix_length": 64
+          }
+        ],
+        "default_gateways_ipv4": [
+          "10.24.18.1"
+        ],
+        "default_gateways_ipv6": [],
+        "route_metric": 25,
+        "dns_servers": [
+          "10.10.0.21"
+        ],
+        "dhcp_enabled": true,
+        "dhcp_lease_obtained": "2026-10-30T14:00:00+08:00",
+        "dhcp_lease_expires": "2099-12-31T23:59:59+08:00",
+        "wlan": {
+          "state": "connected",
+          "ssid": "Campus-WLAN-5G",
+          "profile_name": "Campus-WLAN-5G",
+          "bssid": "70:4f:57:99:88:77",
+          "radio_type": "802.11ax",
+          "channel": 149,
+          "signal_quality_pct": 100,
+          "native_rssi_dbm": null
+        },
+        "available_profiles": [
+          "Campus-WLAN-5G",
+          "Campus-WLAN"
+        ]
+      }
+    ],
+    "recent_wlan_events": []
+  },
+  "dns": {
+    "system_nameservers": [
+      "10.10.0.21"
+    ],
+    "responses": {
+      "system": {
+        "*": {
+          "status": "TIMEOUT",
+          "records": [],
+          "ttl": null,
+          "elapsed_ms": 2500.0
+        }
+      },
+      "223.5.5.5": {
+        "*": {
+          "status": "TIMEOUT",
+          "records": [],
+          "ttl": null,
+          "elapsed_ms": 2500.0
+        }
+      },
+      "119.29.29.29": {
+        "example.com:A": {
+          "status": "NOERROR",
+          "records": [
+            "93.184.215.14"
+          ],
+          "ttl": 600,
+          "elapsed_ms": 620.5
+        },
+        "*": {
+          "status": "SERVFAIL",
+          "records": [],
+          "ttl": null,
+          "elapsed_ms": 840.2
+        }
+      }
+    }
+  },
+  "http_probes": {
+    "direct": {
+      "*": {
+        "outcome": "timeout",
+        "error_detail": "HTTP request timed out within probe budget"
+      }
+    },
+    "configured_proxy": {}
+  },
+  "icmp": {
+    "10.24.18.1": [18.4, null, 95.2, null, null, 42.1, null, null, 112.6, null],
+    "223.5.5.5": [null, 145.0, null, null, 188.3, null, null, 162.1, null, 210.4],
+    "*": [null, 130.5, null, null, 175.2, null, null, 154.0, null, 198.1]
+  },
+  "proxy": {
+    "hkcu": {
+      "proxy_enable_existed": true,
+      "proxy_enable": false,
+      "proxy_server_existed": false,
+      "proxy_server": null,
+      "proxy_override_existed": false,
+      "proxy_override": null,
+      "auto_config_url_existed": false,
+      "auto_config_url": null,
+      "auto_detect": false
+    },
+    "env_proxies": {},
+    "winhttp": {
+      "direct_access": true,
+      "proxy_server": null,
+      "bypass_list": null
+    },
+    "local_ports": {
+      "7890": false,
+      "7897": false,
+      "10808": false,
+      "10809": false
+    },
+    "configured_client": {
+      "adapter": "none",
+      "controller_reachable": null,
+      "client_type": "unknown",
+      "mode": "unknown",
+      "tun_state": "unknown"
+    }
+  }
+}

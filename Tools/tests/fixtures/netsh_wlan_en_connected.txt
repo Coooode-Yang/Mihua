@@ -1,0 +1,19 @@
+There is 1 interface on the system: 
+
+    Name                   : Wi-Fi
+    Description            : Intel(R) Wi-Fi 6 AX201 160MHz
+    GUID                   : 12345678-1234-1234-1234-1234567890ab
+    Physical address       : dc:fb:48:12:34:56
+    State                  : connected
+    SSID                   : Campus-WLAN-5G
+    BSSID                  : 70:4f:57:99:88:77
+    Network type           : Infrastructure
+    Radio type             : 802.11ax
+    Authentication         : WPA2-Enterprise
+    Cipher                 : CCMP
+    Connection mode        : Profile
+    Channel                : 149
+    Receive rate (Mbps)    : 1201
+    Transmit rate (Mbps)   : 1201
+    Signal                 : 100% 
+    Profile                : Campus-WLAN-5G 

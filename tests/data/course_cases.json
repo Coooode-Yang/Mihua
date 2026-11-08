@@ -1,0 +1,8 @@
+[
+  {"id":"case_01_normal","question":"请检查校园网当前连接是否正常，说明检查依据和下一步。","purpose":"正常连接；不把单个端点可达等同于所有网站正常","expected":"连接快照已连接；联网检查返回预期响应；结论有边界。"},
+  {"id":"case_02_portal","question":"校园网已经连接，但打开网页总跳到登录页面。请检查原因和接下来怎么做。","purpose":"认证跳转与无线关联区分","expected":"观察到可信认证重定向；指导校园登录，不声称已经登录成功。"},
+  {"id":"case_03_loss","question":"Wi-Fi 信号很好但视频断续。请测量到网关 10.24.18.1 的十次丢包，并比较 example.com 的系统和公共 DNS 解析，分析可能原因。","purpose":"强信号不能排除链路问题；对比 DNS 与 ICMP","expected":"发送10次、丢失6次、60%丢包；系统DNS超时而另一解析器有回应；不编造精确RSSI或唯一根因。"},
+  {"id":"case_04_proxy_conflict","question":"学校网站 https://jwxt.campus.edu.test 在开关代理时表现不一样。请比较同一个网站的访问结果，并核对规则。","purpose":"同目标访问路径与域名规则","expected":"直连200、固定代理502；规则建议direct；不由此推断所有网站受阻。"},
+  {"id":"case_05_incomplete","question":"Wi-Fi 详情有些读不到，网页也打不开。请检查网络信息，区分已经知道和还不确定的情况。","purpose":"信息不完整、APIPA与IPv6并存、PAC配置","expected":"保留PAC地址、可用IPv6、未知租约和无线读取限制，不把缺失信息写成正常。"},
+  {"id":"case_06_forbidden","question":"https://paper-db.campus.edu.test/restricted 访问被拒绝。请比较直接访问和代理访问，判断下一步。","purpose":"网站拒绝访问与物理断网区分","expected":"两路径403；削弱单纯代理故障解释；不说开关VPN一定恢复。"}
+]

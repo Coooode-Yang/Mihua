@@ -1,0 +1,39 @@
+{
+  "character": "Kenney Cube Pets / animal-chick",
+  "license": "CC0-1.0",
+  "source_obj_sha256": "c16fcf3ef24176317928135e854acbcff981461892d88b5f45e1c4cc0d6f6381",
+  "renderer": "packaging/render_chick_assets.py",
+  "size": [
+    384,
+    384
+  ],
+  "display_name": "米花",
+  "facing": "left",
+  "fixed_canvas": true,
+  "poses": [
+    "Idle",
+    "Blink",
+    "Happy A",
+    "Happy B",
+    "Curious",
+    "Sleep"
+  ],
+  "search_frames": 12,
+  "think_frames": 12,
+  "sleep_frames": 12,
+  "animation_grid": [
+    4,
+    3
+  ],
+  "intro_frames": 4,
+  "loop_frames": 8,
+  "pet_sizes": [
+    140,
+    190,
+    240
+  ],
+  "external_api_called": false,
+  "icon_facing": "front",
+  "icon_shape": "rounded-square",
+  "icon_source": "original-model"
+}

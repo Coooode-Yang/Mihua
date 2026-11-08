@@ -1,0 +1,10 @@
+Pinging 223.5.5.5 with 32 bytes of data:
+Reply from 223.5.5.5: bytes=32 time=12ms TTL=116
+Reply from 223.5.5.5: bytes=32 time=15ms TTL=116
+Request timed out.
+Reply from 223.5.5.5: bytes=32 time<1ms TTL=116
+
+Ping statistics for 223.5.5.5:
+    Packets: Sent = 4, Received = 3, Lost = 1 (25% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 0ms, Maximum = 15ms, Average = 9ms

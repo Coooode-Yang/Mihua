@@ -1,0 +1,84 @@
+{
+  "mode": "mock",
+  "scenario_id": "case_01_normal",
+  "scenarios_dir": null,
+  "allow_writes": false,
+  "audit_log_path": null,
+  "plan_ttl_seconds": 300,
+  "dns": {
+    "public_resolvers": [
+      "223.5.5.5",
+      "119.29.29.29"
+    ],
+    "timeout_s": 2.5,
+    "total_budget_s": 6.0
+  },
+  "probe": {
+    "probe_endpoints": [
+      {
+        "name": "miui_generate_204",
+        "url": "http://connect.rom.miui.com/generate_204",
+        "expected_status": 204,
+        "expected_body_prefix": ""
+      },
+      {
+        "name": "hicloud_generate_204",
+        "url": "http://connectivitycheck.platform.hicloud.com/generate_204",
+        "expected_status": 204,
+        "expected_body_prefix": ""
+      }
+    ],
+    "trusted_portal_hosts": [
+      "portal.example.edu.test"
+    ],
+    "allowed_private_targets": [
+      "10.0.0.0/8",
+      "campus.example.edu.test"
+    ],
+    "allowed_browser_hosts": [
+      "portal.example.edu.test",
+      "nethelp.example.edu.test"
+    ],
+    "max_redirects_inspect": 3,
+    "max_body_bytes": 8192,
+    "http_total_budget_s": 8.0,
+    "ping_total_budget_s": 12.0,
+    "ping_per_packet_timeout_ms": 1000
+  },
+  "proxy": {
+    "configured_proxy_url": "http://127.0.0.1:7890",
+    "candidate_local_ports": [
+      7890,
+      7897,
+      10808,
+      10809
+    ],
+    "local_port_timeout_s": 0.15,
+    "mihomo_controller": {
+      "enabled": false,
+      "base_url": "http://127.0.0.1:9090",
+      "secret_env_var": "NETPET_MIHOMO_SECRET",
+      "timeout_s": 1.5
+    },
+    "routing_rules": [
+      {
+        "rule_id": "example_campus_portal_direct",
+        "match_type": "domain_suffix",
+        "pattern": "campus.example.edu.test",
+        "policy": "direct",
+        "source": "config.example.json (example only - confirm for real campus)",
+        "user_confirmed": false,
+        "description": "示例规则：未确认前不会用于断言真实冲突"
+      },
+      {
+        "rule_id": "example_ai_service_proxy",
+        "match_type": "domain_exact",
+        "pattern": "chatgpt.example.test",
+        "policy": "proxy",
+        "source": "config.example.json (example only - confirm for real user)",
+        "user_confirmed": false,
+        "description": "示例规则：需经用户确认并替换为真实策略后才生效"
+      }
+    ]
+  }
+}

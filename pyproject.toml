@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["tests", "Tools/tests"]
+pythonpath = [".", "Tools", "Tools/src"]
+addopts = "-m 'not real_smoke'"
+markers = [
+  "real_smoke: explicit manual checks against the real Windows host; excluded by default",
+]

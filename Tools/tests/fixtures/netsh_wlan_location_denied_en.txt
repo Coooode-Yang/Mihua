@@ -1,0 +1,2 @@
+Access is denied.
+Location services must be enabled to query wireless interfaces (ms-settings:privacy-location).

@@ -1,0 +1,26 @@
+name: 问题反馈
+description: 报告可以复现的问题，请先删除个人信息和密钥。
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 米花版本
+      description: 例如 0.5.27；也请注明源码运行或 EXE。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Windows 与 Python 版本
+      description: EXE 使用者无需填写 Python。
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤、预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 已脱敏的日志或截图
+      description: 不要附带 API Key、data 数据库、真实文献或个人目录。

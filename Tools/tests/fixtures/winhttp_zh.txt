@@ -1,0 +1,4 @@
+当前的 WinHTTP 代理设置:
+
+    代理服务器:  http=127.0.0.1:7890;https=127.0.0.1:7890
+    绕过列表  :  *.campus.edu.test;<local>

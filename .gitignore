@@ -1,0 +1,46 @@
+# User data and local configuration
+/data/
+/Tools/data/
+.env
+.env.*
+!.env.example
+*.local.json
+*.dpapi.json
+*.sqlite
+*.sqlite3
+*.db
+*.log
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Development environments and rebuildable artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+runtime/
+build/
+dist/
+Release/
+*.spec
+*.exe
+*.dll
+*.pyd
+*.gguf
+*.zip
+*.7z
+*.bak
+*.pending.*
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini

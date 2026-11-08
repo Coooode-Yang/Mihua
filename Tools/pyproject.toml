@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netpet-tools"
+version = "0.1.0"
+description = "Independent network toolkit retained for Mihua compatibility and offline tests"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "AI-for-Net Project Team" }
+]
+dependencies = [
+    "pydantic>=2.6,<3.0",
+    "httpx>=0.28,<1.0",
+    "dnspython>=2.6,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+]
+
+[project.scripts]
+netpet-tools = "netpet_tools.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"netpet_tools" = ["_builtin_scenarios/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not real_smoke'"
+markers = [
+    "real_smoke: manual read-only smoke tests against real Windows host environment (disabled by default)",
+]

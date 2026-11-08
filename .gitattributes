@@ -1,0 +1,24 @@
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.svg text eol=lf
+*.obj text eol=lf
+*.mtl text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.gif binary
+*.ico binary
+*.glb binary
+*.pdf binary
+*.docx binary
+*.pptx binary
+
+# Preserve reviewed upstream bytes and recorded resource hashes.
+/assets/skills/** -text
+/assets/source/chick/** -text
+/licenses/** -text

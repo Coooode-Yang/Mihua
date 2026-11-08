@@ -1,0 +1,15 @@
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : DESKTOP-WESTIE
+
+Wireless LAN adapter Wi-Fi:
+
+   Connection-specific DNS Suffix  . : campus.edu.test
+   Description . . . . . . . . . . . : Intel(R) Wi-Fi 6 AX201 160MHz
+   Physical Address. . . . . . . . . : DC-FB-48-12-34-56
+   DHCP Enabled. . . . . . . . . . . : Yes
+   IPv4 Address. . . . . . . . . . . : 10.24.18.52(Preferred) 
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 10.24.18.1
+   DNS Servers . . . . . . . . . . . : 10.10.0.21
+                                       10.10.0.22
