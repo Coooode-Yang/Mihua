@@ -44,6 +44,7 @@ Function .onInit
     ${IfNot} ${Errors}
         SetOutPath "$INSTDIR"
         WriteUninstaller "$INSTDIR\卸载米花.exe"
+        SetErrorLevel 0
         Quit
     ${EndIf}
     ${GetParameters} $0

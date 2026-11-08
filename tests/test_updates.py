@@ -308,3 +308,31 @@ def test_handoff_timeout_stops_entire_onefile_process_tree(tmp_path, monkeypatch
     assert captured == [['taskkill', '/PID', '43210', '/T', '/F']]
     assert (target / 'MihuaAgent.exe').read_bytes() == b'old'
     assert_user_data(target)
+
+
+@pytest.mark.parametrize('recovery_state', ['rolled_back', 'recovery_required'])
+def test_helper_restarts_only_after_complete_recovery(signing, tmp_path, monkeypatch, recovery_state):
+    from westie_agent import update_install
+    target, work = transaction_dirs(tmp_path)
+    (target / 'update-config.json').write_bytes(canonical_json(asdict(signing[1])))
+    (target / 'build-info.json').write_text('{"version":"0.4.2"}', encoding='utf-8')
+    (work / 'manifest.json').write_bytes(signed(signing))
+    (work / 'package.zip').write_bytes(b'package')
+    parent = type('Parent', (), {'wait': lambda self: None, 'close': lambda self: None})()
+    monkeypatch.setattr(update_install, 'WindowsParent', lambda *args: parent)
+    monkeypatch.setattr(update_install, 'extract_package', lambda *args: None)
+    monkeypatch.setattr(update_install.ctypes.windll.user32, 'MessageBoxW', lambda *args: 0)
+    restarts = []
+    monkeypatch.setattr(update_install.subprocess, 'Popen', lambda args, **kwargs: restarts.append(args))
+    def fail(*args):
+        update_install.journal(work, state=recovery_state)
+        raise UpdateError('simulated installation error')
+    monkeypatch.setattr(update_install, 'install_staged', fail)
+    if recovery_state == 'recovery_required':
+        with pytest.raises(UpdateError):
+            update_install.run_helper(target, work, 12345, signing[1])
+        assert not restarts
+    else:
+        update_install.run_helper(target, work, 12345, signing[1])
+        assert restarts == [[str(target / 'MihuaAgent.exe')]]
+    assert_user_data(target)
