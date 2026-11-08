@@ -42,10 +42,33 @@ def request_exit(pids):
             threads.add(thread)
         return True
     user.EnumWindows(callback(visit), 0)
-    for thread in threads:
-        user.PostThreadMessageW(thread, 0x12, 0, 0)
     if not threads:
-        raise RuntimeError('Could not identify synthetic test application UI thread')
+        # The Qt offscreen plugin has a message queue but no EnumWindows HWND.
+        # Enumerate only threads belonging to the exact synthetic test PIDs.
+        class ThreadEntry(ctypes.Structure):
+            _fields_ = [('size', W.DWORD), ('usage', W.DWORD), ('thread', W.DWORD),
+                        ('owner', W.DWORD), ('priority', W.LONG), ('delta', W.LONG), ('flags', W.DWORD)]
+        kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel.CreateToolhelp32Snapshot.argtypes = [W.DWORD, W.DWORD]
+        kernel.CreateToolhelp32Snapshot.restype = W.HANDLE
+        kernel.Thread32First.argtypes = kernel.Thread32Next.argtypes = [W.HANDLE, ctypes.POINTER(ThreadEntry)]
+        kernel.CloseHandle.argtypes = [W.HANDLE]
+        snapshot = kernel.CreateToolhelp32Snapshot(4, 0)
+        if snapshot == ctypes.c_void_p(-1).value:
+            raise RuntimeError('Could not enumerate synthetic test threads')
+        try:
+            entry = ThreadEntry()
+            entry.size = ctypes.sizeof(entry)
+            more = kernel.Thread32First(snapshot, ctypes.byref(entry))
+            while more:
+                if entry.owner in pids:
+                    threads.add(entry.thread)
+                more = kernel.Thread32Next(snapshot, ctypes.byref(entry))
+        finally:
+            kernel.CloseHandle(snapshot)
+    delivered = [thread for thread in threads if user.PostThreadMessageW(thread, 0x12, 0, 0)]
+    if not delivered:
+        raise RuntimeError('Could not signal synthetic test application message queue')
 
 
 def wait_file(path, process, timeout=120):
