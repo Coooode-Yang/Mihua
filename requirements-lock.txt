@@ -29,7 +29,7 @@ pluggy==1.7.0
 pycparser==3.12
 pydantic==2.14.2
 pydantic-ai-slim==2.63.0
-pydantic-graph==2.63.0
+pydantic-graph==2.66.0
 pydantic_core==2.50.2
 Pygments==2.21.0
 pyinstaller==6.22.3
