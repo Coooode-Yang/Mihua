@@ -34,6 +34,6 @@ git push -u origin main
 - README 当前使用相对链接，无需填写仓库 URL 即可显示图片和文档。
 - 准备二进制 Release 时按 [RELEASING.md](RELEASING.md) 操作，先验证再上传。
 
-本次准备不创建远程仓库、不提交和推送代码、不发布 Release。GitHub 地址确定后，再接入自动更新。
+仓库已发布在 https://github.com/Coooode-Yang/Mihua。后续开发在此 Git 工作目录提交；正式 Release 与自动更新按 [UPDATES.md](UPDATES.md) 操作。
 
 参考：[创建仓库](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository)、[GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)。

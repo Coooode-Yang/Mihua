@@ -116,16 +116,20 @@ def main():
     subprocess.run([gcc,'-municode','-mwindows','-static','-s','-O2','-Wall','-Wextra',
                     str(ROOT/'packaging/launcher.c'),str(obj),'-o',str(native),'-luser32',
                     '-Wl,--dynamicbase,--nxcompat'],check=True)
+    for icon_name in ('米花.ico','米花-正面.ico'):
+        shutil.copy2(icon,package/icon_name)
     copying=compiler/'COPYING'
     (package/'licenses').mkdir(exist_ok=True)
     shutil.copy2(copying,package/'licenses/NSIS-COPYING.txt')
     files={p.relative_to(package).as_posix():p for p in package.rglob('*')
-           if p.is_file() and p.relative_to(package).parts[0]!='data'}
+           if p.is_file() and p.relative_to(package).parts[0]!='data' and p.name!='卸载米花.exe'}
     add,remove=write_file_manifests(work,files)
     setup=output/('米花安装程序-v'+version+'.exe')
     subprocess.run([str(compiler/'makensis.exe'),'/V2','/INPUTCHARSET','UTF8',
         '/DVERSION='+version,'/DOUTPUT='+str(setup),'/DICON='+str(icon),'/DPACKAGE='+str(package),
         '/DFILES='+str(add),'/DREMOVE_FILES='+str(remove),str(ROOT/'packaging/installer.nsi')],check=True)
+    subprocess.run([str(setup),'/S','/WRITEUNINSTALLER','/D='+str(package)],check=True,timeout=30)
+    if not (package/'卸载米花.exe').is_file():raise RuntimeError('未能生成随更新包分发的卸载程序。')
     portable=output/('米花-免安装版-v'+version+'.zip')
     zip_root='米花-v'+version
     with zipfile.ZipFile(portable,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:

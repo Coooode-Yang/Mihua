@@ -43,11 +43,14 @@ def main():
     from westie_agent.file_conversion import FILEE_VERSION,FILEE_ARCHIVE_SHA256
     from westie_agent.paper_reader import ReaderGenerator
     from westie_agent.settings import Settings
+    from westie_agent.updates import UpdateConfig
     parser=argparse.ArgumentParser(description='构建米花 Windows x64 公开发布包')
     parser.add_argument('--output',type=Path,default=ROOT/'Release'/('v'+__version__))
     parser.add_argument('--no-archives',action='store_true')
     args=parser.parse_args()
     if os.name!='nt':raise RuntimeError('Windows 应用需要在 Windows 上构建。')
+    config=UpdateConfig.load(ROOT)
+    if not config.enabled:raise RuntimeError('请先配置 update-config.json 中的仓库和签名公钥。')
     output=validate_destination(args.output)
     engine=ROOT/'runtime/filee'/FILEE_VERSION
     manifest=engine/'bai-engine-manifest.json'
@@ -62,6 +65,7 @@ def main():
              '--icon',str(ROOT/'assets/ui/chick-head.ico'),'--distpath',str(output),
              '--workpath',str(ROOT/'build'/('pyinstaller-'+output.name)),
              '--specpath',str(ROOT/'build'/output.name),'--paths',str(ROOT),
+             '--add-data',str(ROOT/'update-config.json')+';.',
              '--add-data',str(ROOT/'assets')+';assets','--collect-all','netpet_tools',
              '--collect-data','genai_prices','--recursive-copy-metadata','pydantic-ai-slim',
              '--copy-metadata','openai','--copy-metadata','PySide6',
@@ -71,6 +75,15 @@ def main():
     if ffi.is_file():command += ['--add-binary',str(ffi)+';.']
     subprocess.run(command+[str(ROOT/'app.py')],cwd=ROOT,check=True)
     package=output/'MihuaAgent'
+    helper_command=[sys.executable,'-m','PyInstaller','--noconfirm','--onefile','--windowed',
+        '--name','MihuaUpdater','--icon',str(ROOT/'assets/ui/chick-head.ico'),
+        '--distpath',str(ROOT/'build/updater-dist'),'--workpath',str(ROOT/'build/updater-work'),
+        '--specpath',str(ROOT/'build'),'--paths',str(ROOT),
+        '--add-data',str(ROOT/'update-config.json')+';.', '--exclude-module','PySide6']
+    if ffi.is_file():helper_command += ['--add-binary',str(ffi)+';.']
+    subprocess.run(helper_command+[str(ROOT/'packaging/updater_entry.py')],cwd=ROOT,check=True)
+    shutil.copy2(ROOT/'build/updater-dist/MihuaUpdater.exe',package/'MihuaUpdater.exe')
+    shutil.copy2(ROOT/'update-config.json',package/'update-config.json')
     shutil.copytree(engine,package/'runtime/filee'/FILEE_VERSION,dirs_exist_ok=True)
     shutil.copytree(ROOT/'licenses',package/'licenses',dirs_exist_ok=True)
     for name in ('LICENSE','THIRD_PARTY_NOTICES.md','USER_GUIDE.txt'):
@@ -91,13 +104,13 @@ def main():
         vocabulary_mode='spelling',legacy_paper_cards=False,growth_system=False,wardrobe=False,
         focus_seconds_per_coin=None,focus_completion_bonus=0,iphone_sync=False,
         file_conversion=True,filee_version=FILEE_VERSION,application_icon='assets/ui/chick-head.ico',
-        automatic_updates=False,pet_character='Kenney chick / 米花',pet_sizes=[140,190,240])
+        automatic_updates=True,update_repository=config.repository,updater_bundled=True,pet_character='Kenney chick / 米花',pet_sizes=[140,190,240])
     (package/'build-info.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')
     env=dict(os.environ)
     for key in ('PYTHONHOME','PYTHONPATH','DEEPSEEK_API_KEY','OPENAI_API_KEY'):env.pop(key,None)
     env['QT_QPA_PLATFORM']='offscreen'
     checks={}
-    for kind in ('chick','self','api','unified','attachments','reader','journal','quick-ask','sedentary','dialog-chrome','conversion'):
+    for kind in ('update','chick','self','api','unified','attachments','reader','journal','quick-ask','sedentary','dialog-chrome','conversion'):
         report=output/('packaged-'+kind+'.json')
         flag='--self-test' if kind=='self' else '--'+kind+'-self-test'
         subprocess.run([str(package/'MihuaAgent.exe'),flag,'--self-test-output',str(report)],

@@ -44,5 +44,7 @@ jobs:
         run: python -m pytest -q
       - name: Check chick assets and interaction
         run: python app.py --chick-self-test
+      - name: Check automatic update entry
+        run: python app.py --update-self-test
       - name: Check unified workspace
         run: python app.py --unified-self-test

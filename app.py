@@ -12,7 +12,7 @@ import sys
 import time
 from pathlib import Path
 
-if any(flag in sys.argv for flag in ("--chick-self-test", "--focus-style-self-test", "--dialog-chrome-self-test", "--sedentary-self-test", "--web-shortcuts-self-test", "--quick-ask-self-test", "--self-test", "--model-self-test", "--diagnosis-self-test", "--api-self-test", "--offline-self-test", "--personal-self-test", "--vocabulary-self-test", "--conversion-self-test", "--workspace-self-test", "--reader-self-test", "--journal-self-test", "--unified-self-test", "--attachments-self-test", "--growth-self-test", "--iphone-sync-self-test")):
+if any(flag in sys.argv for flag in ("--update-self-test", "--chick-self-test", "--focus-style-self-test", "--dialog-chrome-self-test", "--sedentary-self-test", "--web-shortcuts-self-test", "--quick-ask-self-test", "--self-test", "--model-self-test", "--diagnosis-self-test", "--api-self-test", "--offline-self-test", "--personal-self-test", "--vocabulary-self-test", "--conversion-self-test", "--workspace-self-test", "--reader-self-test", "--journal-self-test", "--unified-self-test", "--attachments-self-test", "--growth-self-test", "--iphone-sync-self-test")):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtCore import QLockFile, QPoint, QPointF, QRectF, Qt, QTimer, Signal, QUrl
@@ -110,6 +110,7 @@ class ChatPanel(AttachmentComposer, QWidget):
     conversion_requested = Signal()
     conversation_cleared = Signal()
     growth_requested = Signal(str)
+    update_requested = Signal()
     quick_requested = Signal()
     quick_submitted = Signal(str, object, bool)
 
@@ -578,6 +579,7 @@ class PetWindow(QWidget):
             sizes.addAction(label, lambda checked=False, value=size: self.set_pet_size(value))
         menu.addAction("暂停 / 继续动画", self.toggle_pause)
         menu.addSeparator()
+        menu.addAction("软件更新", self.chat.update_requested.emit)
         menu.addAction("退出米花", self.shutdown)
         menu._actions = menu.actions()
         return menu
@@ -729,6 +731,7 @@ def launch_desktop(pet, quit_after=0):
 def main():
     from westie_agent import __version__
     parser = argparse.ArgumentParser(description=f"米花学习与生活助手 v{__version__}")
+    parser.add_argument('--update-self-test', action='store_true', help='离屏检查自动更新入口与程序完整性，不访问 GitHub 或个人数据')
     parser.add_argument('--chick-self-test', action='store_true', help='离屏验证小鸡素材、图标和互动，不访问网络或个人数据')
     parser.add_argument("--no-tray", action="store_true")
     parser.add_argument("--quit-after", type=int, default=0, help="冒烟检查：指定毫秒后自动退出")
@@ -775,6 +778,16 @@ def main():
     app.setQuitOnLastWindowClosed(False)
     from westie_agent.window_chrome import install_dialog_chrome
     install_dialog_chrome()
+    if args.update_self_test:
+        import json
+        from westie_agent.update_smoke import run_update_smoke
+        from westie_agent.settings import application_dir
+        report = run_update_smoke(lambda: PetWindow(SpriteBank(ROOT/'assets/chick-sheet.png'), use_tray=False), ROOT, application_dir())
+        if args.self_test_output:
+            Path(args.self_test_output).write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+        elif sys.stdout:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
     if args.chick_self_test:
         import json
         from westie_agent.chick_smoke import run_chick_smoke
@@ -1075,6 +1088,9 @@ def main():
         pet.shutdown()
         return 0
     from westie_agent.settings import application_dir
+    from westie_agent.update_install import update_in_progress
+    if update_in_progress(application_dir()):
+        return 0
     data_dir = application_dir() / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     instance_lock = QLockFile(str(data_dir / "application.lock"))
@@ -1089,6 +1105,9 @@ def main():
         pet = PetWindow(sprites, use_tray=not args.no_tray)
         from westie_agent.controller import AgentController
         controller = AgentController(pet)
+        from westie_agent.update_ui import UpdateController
+        updater = UpdateController(pet, application_dir(), controller)
+        app.aboutToQuit.connect(updater.close)
         app.aboutToQuit.connect(controller.close)
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
@@ -1102,6 +1121,8 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except Exception:
         import traceback
+        if sys.stderr:
+            traceback.print_exc(file=sys.stderr)
         base = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else ROOT
         try:
             logs = base / "data" / "logs"
@@ -1109,7 +1130,7 @@ if __name__ == "__main__":
             (logs / "startup-error.log").write_text(traceback.format_exc(), encoding="utf-8")
         except OSError:
             pass
-        if not any(flag in sys.argv for flag in ("--chick-self-test", "--focus-style-self-test", "--dialog-chrome-self-test", "--sedentary-self-test", "--web-shortcuts-self-test", "--quick-ask-self-test", "--self-test", "--model-self-test", "--diagnosis-self-test", "--api-self-test", "--offline-self-test", "--personal-self-test", "--vocabulary-self-test", "--conversion-self-test", "--workspace-self-test", "--reader-self-test", "--journal-self-test", "--unified-self-test", "--attachments-self-test", "--growth-self-test", "--iphone-sync-self-test", "--reader-extract-input")):
+        if not any(flag in sys.argv for flag in ("--update-self-test", "--chick-self-test", "--focus-style-self-test", "--dialog-chrome-self-test", "--sedentary-self-test", "--web-shortcuts-self-test", "--quick-ask-self-test", "--self-test", "--model-self-test", "--diagnosis-self-test", "--api-self-test", "--offline-self-test", "--personal-self-test", "--vocabulary-self-test", "--conversion-self-test", "--workspace-self-test", "--reader-self-test", "--journal-self-test", "--unified-self-test", "--attachments-self-test", "--growth-self-test", "--iphone-sync-self-test", "--reader-extract-input")):
             from PySide6.QtWidgets import QMessageBox
             QApplication.instance() or QApplication(sys.argv[:1])
             QMessageBox.critical(None, "米花暂时无法启动", "请查看 data/logs/startup-error.log，并联系开发者。")

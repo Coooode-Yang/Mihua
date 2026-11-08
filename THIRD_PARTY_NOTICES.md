@@ -14,6 +14,7 @@
 | pdfplumber / pdfminer.six | MIT；[pdfplumber](https://github.com/jsvine/pdfplumber)、[pdfminer.six](https://github.com/pdfminer/pdfminer.six) | 本地 PDF 文本与几何提取 |
 | pypdfium2 / PDFium | Apache-2.0 / BSD 及其捆绑依赖许可；[上游仓库](https://github.com/pypdfium2-team/pypdfium2) | 本地 PDF 页面渲染；二进制发布保留其完整许可 |
 | Filee 2.2.0 | MIT，© 2026 Myeonggu Kim 与贡献者；[上游版本](https://github.com/KnifeLemon/Filee/releases/tag/v2.2.0) | 源仓库不包含二进制；开发者运行准备脚本后安装到被忽略的 `runtime/`，发布时保留引擎声明 |
+| cryptography 50.0.2 | Apache-2.0 OR BSD-3-Clause；[上游仓库](https://github.com/pyca/cryptography) | 更新清单的 Ed25519 签名验证；二进制保留加密库及其依赖许可 |
 | PyInstaller | GPL 与其分发例外；[上游许可](https://pyinstaller.org/en/stable/license.html) | 仅为构建工具 |
 | NSIS | NSIS 及附属许可；[官方仓库](https://github.com/kichik/nsis) | 安装包构建工具，下载固定版本并验证 SHA-256 |
 

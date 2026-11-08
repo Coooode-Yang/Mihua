@@ -40,6 +40,14 @@ Function .onInit
     SetShellVarContext current
     ${GetParameters} $0
     ClearErrors
+    ${GetOptions} $0 "/WRITEUNINSTALLER" $1
+    ${IfNot} ${Errors}
+        SetOutPath "$INSTDIR"
+        WriteUninstaller "$INSTDIR\卸载米花.exe"
+        Quit
+    ${EndIf}
+    ${GetParameters} $0
+    ClearErrors
     ${GetOptions} $0 "/TESTMODE" $1
     ${IfNot} ${Errors}
         StrCpy $TestMode "1"
