@@ -9,10 +9,10 @@ import time
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QTimer, Signal, Qt
-from PySide6.QtWidgets import QApplication, QCheckBox, QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextBrowser, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QCheckBox, QDialog, QFrame, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextBrowser, QVBoxLayout
 
 from .update_install import launch_helper
-from .updates import GitHubUpdater, UpdateConfig, UpdateError, installed_version
+from .updates import GitHubUpdater, UpdateConfig, UpdateError, installed_version, UpdateConnectionError
 from . import __version__ as VERSION
 
 
@@ -26,7 +26,7 @@ class UpdateDialog(QDialog):
     def __init__(self, updater):
         super().__init__(updater.pet.chat)
         self.setWindowTitle("米花 · 软件更新")
-        self.resize(470, 330)
+        self.resize(470, 200)
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel("当前版本：" + updater.current))
         self.status = QLabel("点击检查更新，查看是否有新版本。")
@@ -35,6 +35,10 @@ class UpdateDialog(QDialog):
         layout.addWidget(self.status)
         self.notes = QTextBrowser()
         self.notes.setOpenExternalLinks(False)
+        self.notes.setFrameShape(QFrame.Shape.NoFrame)
+        self.notes.setStyleSheet('QTextBrowser { background: transparent; border: none; padding: 0; }')
+        self.notes.setFixedHeight(120)
+        self.notes.hide()
         layout.addWidget(self.notes)
         self.automatic = QCheckBox("启动时自动检查更新（运行期间每 6 小时检查一次）")
         self.automatic.setChecked(updater.preferences.get("automatic", True))
@@ -57,6 +61,13 @@ class UpdateDialog(QDialog):
         row.addWidget(self.install)
         row.addWidget(self.cancel)
         layout.addLayout(row)
+
+
+    def set_notes(self, text):
+        self.notes.setPlainText(text)
+        self.notes.setVisible(bool(text.strip()))
+        self.layout().activate()
+        self.resize(max(470, self.minimumWidth()), self.sizeHint().height())
 
 
 class UpdateController(QObject):
@@ -183,6 +194,14 @@ class UpdateController(QObject):
                 elif kind == 'download':
                     shutil.rmtree(result, ignore_errors=True)
             except Exception as exc:
+                if isinstance(exc, UpdateConnectionError):
+                    try:
+                        log = self.base / 'data/logs/update-connection.json'
+                        log.parent.mkdir(parents=True, exist_ok=True)
+                        log.write_text(json.dumps({'time':time.time(), 'stage':kind,
+                            'reason':exc.reason, 'http_status':exc.status}, ensure_ascii=False), encoding='utf-8')
+                    except OSError:
+                        pass
                 if not self.stopped:
                     self.events.failed.emit(str(exc) if isinstance(exc, (UpdateError, OSError)) else "更新未完成，请稍后重试。")
         threading.Thread(target=run, name="mihua-update-" + kind, daemon=True).start()
@@ -258,7 +277,7 @@ class UpdateController(QObject):
                     and getattr(sys, 'frozen', False) and sys.platform == 'win32'):
                 if self.dialog is None:
                     self.dialog = UpdateDialog(self)
-                self.dialog.notes.setPlainText(result.notes or "发布者未提供更新说明。")
+                self.dialog.set_notes(result.notes)
                 self.install()
                 return
             if self.background and result is None and (self.dialog is None or not self.dialog.isVisible()):
@@ -266,10 +285,10 @@ class UpdateController(QObject):
             self.show()
             if result is None:
                 self.dialog.status.setText("当前已经是最新版本。")
-                self.dialog.notes.clear()
+                self.dialog.set_notes("")
             else:
                 self.dialog.status.setText("发现新版本：" + result.version)
-                self.dialog.notes.setPlainText(result.notes or "发布者未提供更新说明。")
+                self.dialog.set_notes(result.notes)
             self.dialog.install.setText("下载更新")
             self.dialog.install.setEnabled(result is not None)
         elif kind == "download":

@@ -336,3 +336,93 @@ def test_helper_restarts_only_after_complete_recovery(signing, tmp_path, monkeyp
         update_install.run_helper(target, work, 12345, signing[1])
         assert restarts == [[str(target / 'MihuaAgent.exe')]]
     assert_user_data(target)
+
+
+def test_manifest_retry_discards_partial_response(signing):
+    updater = GitHubUpdater(signing[1], '0.4.2')
+    calls = []
+    def fetch(url, limit, write):
+        calls.append(url)
+        if len(calls) == 1:
+            write(b'partial response')
+            raise updates.UpdateConnectionError('timeout')
+        write(signed(signing))
+    updater._fetch = fetch
+    assert updater.check().version == '0.5.1'
+    assert len(calls) == 2
+
+
+def test_package_retry_restarts_file_without_partial_bytes(signing, tmp_path):
+    content = package_bytes(signing[1])
+    release = verify_manifest(signed(signing, content), signing[1])
+    updater = GitHubUpdater(signing[1], '0.4.2')
+    calls = []
+    def fetch(url, limit, write, progress):
+        calls.append(url)
+        if len(calls) == 1:
+            write(b'broken-prefix')
+            raise updates.UpdateConnectionError('connection')
+        write(content)
+    updater._fetch = fetch
+    work = updater.download(release, tmp_path / 'Installed')
+    assert (work / 'package.zip').read_bytes() == content
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize('status,retries', [(403,1), (429,1), (503,3)])
+def test_http_error_preserves_status_and_bounds_retry(signing, status, retries):
+    requests = []
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(status)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        with pytest.raises(updates.UpdateConnectionError) as caught:
+            GitHubUpdater(signing[1], '0.4.2', client=client).check()
+    assert len(requests) == retries
+    assert caught.value.status == status
+    assert str(status) in str(caught.value)
+    assert 'https://' not in str(caught.value)
+
+
+def test_bad_signature_is_not_retried(signing):
+    value = json.loads(signed(signing))
+    value['manifest']['version'] = '9.0.0'
+    requests = []
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200,content=canonical_json(value))
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        with pytest.raises(UpdateError,match='签名'):
+            GitHubUpdater(signing[1], '0.4.2', client=client).check()
+    assert len(requests) == 1
+
+
+def test_cancel_during_retry_wait_stops_without_further_network(signing):
+    updater = GitHubUpdater(signing[1], '0.4.2')
+    calls = []
+    def fetch(*args):
+        calls.append(1)
+        updater.cancel.set()
+        raise updates.UpdateConnectionError('timeout')
+    updater._fetch = fetch
+    with pytest.raises(UpdateCancelled):
+        updater.check()
+    assert calls == [1]
+
+
+def test_certificate_failure_is_distinct_and_never_downgraded(signing):
+    import ssl
+    error = httpx.ConnectError('TLS handshake failed')
+    error.__cause__ = ssl.SSLCertVerificationError('CERTIFICATE_VERIFY_FAILED')
+    classified = updates.connection_error(error)
+    assert classified.reason == 'tls' and not classified.retryable
+    assert '证书' in str(classified)
+
+
+
+def test_file_write_error_is_not_mislabeled_as_network_failure(signing):
+    with httpx.Client(transport=httpx.MockTransport(lambda request: httpx.Response(200,content=b'bytes'))) as client:
+        def disk_full(block):
+            raise OSError('synthetic disk full')
+        with pytest.raises(OSError,match='disk full'):
+            GitHubUpdater(signing[1], '0.4.2', client=client)._fetch(signing[1].manifest_url,128,disk_full)

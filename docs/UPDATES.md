@@ -42,3 +42,9 @@ ZIP 仅接受 `MihuaAgent/` 根目录；拒绝路径穿越、Windows 特殊文�
 发布工具只生成本地文件，不上传。它拒绝包内的个人数据、缺失助手、版本格式错误和公私钥不匹配。签名私钥可选使用 `MIHUA_UPDATE_KEY_PASSWORD` 加密；禁止把密码或私钥提交到源码、Actions 日志或 Release。若自己 Fork 发行，生成自己的密钥，再使用 `release_updates.py configure --repository 用户/仓库 --public-key <公钥文件>` 并重新构建。官方程序不会接受改变更新源或公钥的 ZIP。
 
 参考：[GitHub Releases API](https://docs.github.com/en/rest/releases/releases)。
+
+## 连接故障
+
+0.5.29 起，对短暂超时、连接中断和 GitHub 服务端错误最多尝试 3 次。DNS、证书、代理和 HTTP 限制会显示各自的具体提示。客户端沿用系统及环境配置中的代理和证书验证，不使用第三方更新镜像。
+
+连接失败的本机记录保存在 `data/logs/update-connection.json`，仅包含时间、检查或下载阶段、错误类别和 HTTP 状态；不保存代理账号、下载临时地址或 API Key，也不上传。持续失败时可根据具体提示检查网络与系统代理。

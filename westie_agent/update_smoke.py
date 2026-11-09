@@ -20,6 +20,7 @@ def run_update_smoke(factory, root, base):
             action = next(a for a in pet.make_menu().actions() if a.text() == '软件更新')
             action.trigger()
             assert updater.dialog.isVisible()
+            assert updater.dialog.notes.isHidden()
             assert updater.dialog.automatic.isChecked() and updater.dialog.auto_download.isChecked()
             assert not updater.timer.isActive() and not updater.startup_timer.isActive()
         finally:

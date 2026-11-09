@@ -6,6 +6,8 @@ import hashlib
 import json
 import re
 import shutil
+import socket
+import ssl
 import stat
 import tempfile
 import threading
@@ -34,6 +36,43 @@ class UpdateError(ValueError):
 
 class UpdateCancelled(UpdateError):
     pass
+
+
+class UpdateConnectionError(UpdateError):
+    def __init__(self, reason, status=None):
+        self.reason, self.status = reason, status
+        self.retryable = reason in {'timeout', 'connection'} or (reason == 'http' and status is not None and 500 <= status < 600)
+        messages = {
+            'timeout': '连接 GitHub 超时，请稍后重试，或检查系统代理是否正常。',
+            'dns': '无法解析 GitHub 地址，请检查网络或 DNS 设置后重试。',
+            'tls': 'GitHub 的 HTTPS 证书校验失败，请检查系统时间和证书设置。',
+            'proxy': '无法连接更新所用的系统代理，请检查代理是否已启动。',
+            'connection': '与 GitHub 的连接中断，请检查网络或系统代理后重试。',
+        }
+        if reason == 'http':
+            text = f'GitHub 更新请求未成功（HTTP {status}），请稍后重试。'
+        else:
+            text = messages.get(reason, '更新连接失败，请检查网络后重试。')
+        super().__init__(text)
+
+
+def connection_error(exc):
+    chain=[]
+    item=exc
+    while item is not None and len(chain)<10:
+        chain.append(item)
+        item=item.__cause__
+    if isinstance(exc, httpx.HTTPStatusError):
+        return UpdateConnectionError('http', exc.response.status_code)
+    if any(isinstance(e, httpx.ProxyError) for e in chain):
+        return UpdateConnectionError('proxy')
+    if any(isinstance(e, ssl.SSLError) or 'CERTIFICATE_VERIFY_FAILED' in str(e) for e in chain):
+        return UpdateConnectionError('tls')
+    if any(isinstance(e, socket.gaierror) or 'getaddrinfo failed' in str(e).lower() for e in chain):
+        return UpdateConnectionError('dns')
+    if isinstance(exc, httpx.TimeoutException):
+        return UpdateConnectionError('timeout')
+    return UpdateConnectionError('connection')
 
 
 def version_tuple(value: str) -> tuple[int, int, int]:
@@ -197,9 +236,12 @@ class GitHubUpdater:
 
     def _fetch(self, url, limit, write, progress=lambda _: None):
         started = time.monotonic()
-        client = self.client or httpx.Client(timeout=httpx.Timeout(30, connect=10), follow_redirects=False,
-                                           headers={"User-Agent": "MihuaAgent-Updater/" + VERSION})
+        client = None
         try:
+            if self.cancel.is_set():
+                raise UpdateCancelled("更新已取消。")
+            client = self.client or httpx.Client(timeout=httpx.Timeout(15, connect=8), follow_redirects=False,
+                                               headers={"User-Agent": "MihuaAgent-Updater/" + VERSION})
             for _ in range(6):
                 _allowed_url(url, self.config.repository)
                 if self.cancel.is_set():
@@ -228,18 +270,29 @@ class GitHubUpdater:
                     return
             raise UpdateError("更新地址跳转次数过多。")
         except httpx.HTTPError as exc:
-            raise UpdateError("无法连接 GitHub 更新服务，请检查网络后重试；现有版本仍可使用。") from exc
+            raise connection_error(exc) from exc
         finally:
-            if self.client is None:
+            if self.client is None and client is not None:
                 client.close()
 
     def check(self):
         if not self.config.enabled:
             raise UpdateError("发布者尚未配置更新仓库，当前版本仍可正常使用。")
-        data = bytearray()
-        self._fetch(self.config.manifest_url, MAX_MANIFEST, data.extend)
+        for attempt in range(3):
+            data = bytearray()
+            try:
+                self._fetch(self.config.manifest_url, MAX_MANIFEST, data.extend)
+                break
+            except UpdateConnectionError as exc:
+                self.wait_for_retry(exc, attempt)
         release = verify_manifest(bytes(data), self.config)
         return release if version_tuple(release.version) > version_tuple(self.current) else None
+
+    def wait_for_retry(self, error, attempt):
+        if not error.retryable or attempt >= 2:
+            raise error
+        if self.cancel.wait(.4 * (attempt + 1)):
+            raise UpdateCancelled("更新已取消。")
 
     def download(self, release: Release, base: Path, progress=lambda _: None) -> Path:
         base = base.resolve()
@@ -249,9 +302,14 @@ class GitHubUpdater:
             if shutil.disk_usage(base.parent).free < release.size * 2 + 256 * 1024**2:
                 raise UpdateError("磁盘空间不足，无法下载和展开更新。")
             archive = work / "package.zip"
-            with archive.open("xb") as stream:
-                self._fetch(release.url, release.size, stream.write,
-                            lambda count: progress(min(99, int(count * 100 / release.size))))
+            for attempt in range(3):
+                try:
+                    with archive.open("xb" if attempt == 0 else "wb") as stream:
+                        self._fetch(release.url, release.size, stream.write,
+                                    lambda count: progress(min(99, int(count * 100 / release.size))))
+                    break
+                except UpdateConnectionError as exc:
+                    self.wait_for_retry(exc, attempt)
             verify_package(archive, release)
             (work / "manifest.json").write_bytes(canonical_json(release.envelope))
             extract_package(archive, work / "staged", release, self.config, self.cancel)

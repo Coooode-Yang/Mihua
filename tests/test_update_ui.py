@@ -45,6 +45,7 @@ def test_menu_opens_update_dialog_without_model_or_network(desktop, monkeypatch)
     action.trigger()
     app.processEvents()
     assert updater.dialog.isVisible()
+    assert updater.dialog.notes.isHidden()
     assert '尚未开通' in updater.dialog.status.text()
     assert not updater.dialog.check.isEnabled()
     updater.automatic_check()
@@ -132,3 +133,17 @@ def test_corrupt_update_metadata_does_not_stop_application(desktop, monkeypatch)
         assert not agent.busy
     finally:
         other.close()
+
+
+def test_background_failure_records_only_safe_network_category(desktop, monkeypatch):
+    import json
+    _, _, _, updater = desktop
+    def fail(_):
+        raise update_ui.UpdateConnectionError('timeout')
+    monkeypatch.setattr(update_ui.GitHubUpdater, 'check', fail)
+    updater.check(background=True)
+    wait_done(updater)
+    assert updater.dialog is None
+    record = json.loads((updater.base/'data/logs/update-connection.json').read_text(encoding='utf-8'))
+    assert set(record) == {'time','stage','reason','http_status'}
+    assert record['reason'] == 'timeout' and record['stage'] == 'check'
